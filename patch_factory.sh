@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# patch_factory.sh — 55-byte patcher for COMFAST CF-WR632AX Wi-Fi EEPROM
+# patch_factory.sh — patcher for COMFAST CF-WR632AX Wi-Fi EEPROM
 # Usage: ./patch_factory.sh
 #
 # Copyright (C) 2026  Andrii Kuiukov
@@ -22,12 +22,12 @@
 
 . /lib/functions.sh
 
-VERSION="v3.3.3"
+VERSION="v3.3.4"
 
 # Set the MTD partition label
 MTD_LABEL="Factory"
 
-# PATCH TABLE: hex_offset hex_byte (55 entries)
+# PATCH TABLE: hex_offset hex_byte
 PATCHES="
 0x0000024C 0xA4
 0x0000024D 0xA6
@@ -40,50 +40,7 @@ PATCHES="
 0x00000257 0x91
 0x00000259 0x89
 0x00000270 0x0C
-0x00000495 0xC2
-0x00000496 0xC2
-0x00000497 0xC2
-0x00000498 0xC0
-0x00000499 0xC1
-0x0000049A 0xC1
-0x000004A1 0x81
-0x000004A2 0x81
-0x000004A3 0x81
-0x000004A4 0x81
-0x000004A5 0x81
-0x000004A6 0xC1
-0x000004A7 0x81
-0x000004A8 0x81
-0x000004A9 0xC1
-0x000004AA 0xC1
-0x000004AB 0xC1
-0x000004AC 0x81
-0x000004AD 0xC0
-0x000004AE 0xC0
-0x000004AF 0xC1
-0x000004B0 0xC1
-0x000004B1 0xC1
-0x000004B2 0xC1
-0x000004B3 0xC1
-0x000004B4 0xC1
-0x000004B5 0x83
-0x000004B6 0x83
-0x000004B7 0x83
-0x000004B8 0x83
-0x000004B9 0x83
-0x000004BA 0x83
-0x000004BB 0x83
-0x000004BC 0x83
-0x000004BD 0x81
-0x000004BE 0x81
-0x000004BF 0x80
-0x00000991 0xB8
-0x00000995 0xB8
-0x00000999 0xCA
 0x000009A0 0x01
-0x000009A6 0xC4
-0x000009A8 0xBB
-0x000009AA 0x87
 "
 ###############################################
 
@@ -220,11 +177,11 @@ if [ "$MAGIC" != "7981" ]; then
 	log_exit "Error: $TARGET doesn't contain EEPROM"
 fi
 
-# Read the TSSI byte from the target file
-TSSI=$(hexdump -s "0x09A0" -n 1 -e '"%02X"' "$TARGET")
-# Check if the TSSI byte is 0x00, which indicates the critical flaw with closed-loop PA power control
-if [ "$TSSI" = "00" ]; then
-	printf "\n\nEEPROM has critical flaw with closed-loop PA power control."
+# Read the MT_EE_ADIE_FT_VERSION byte from the target file
+MT_EE_ADIE_FT_VERSION=$(hexdump -s "0x9A0" -n 1 -e '"%02X"' "$TARGET")
+# Check if the MT_EE_ADIE_FT_VERSION byte is 0x00, which indicates the critical flaw with closed-loop PA power control
+if [ "$MT_EE_ADIE_FT_VERSION" = "00" ]; then
+	printf "\n\nEEPROM has critical calibration data flaw."
 	printf "\nPatching is required to fix the issue."
 else
 	printf "\n\nIt seems EEPROM is already patched. Continuing anyway..."
